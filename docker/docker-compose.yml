@@ -1,0 +1,109 @@
+version: "2.1"
+services:
+  app:
+    image: spring-boot-runner
+    container_name: spring-boot-runner-container
+#    depends_on:
+#      kafka:
+#        condition: service_healthy
+    extends:
+      file: docker-compose.build.yml
+      service: mvn
+    ports:
+      - 8080:8080
+      - 5005:5005
+    command: spring-boot:run
+    environment:
+      JAVA_TOOL_OPTIONS: -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005"
+    env_file: .env
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13.1-alpine
+    container_name: db
+    volumes:
+      - ../docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d/
+    environment:
+      - POSTGRES_USER=mikki-rurk
+      - POSTGRES_PASSWORD=54321
+      - POSTGRES_DB=client-db
+    depends_on:
+      kafka:
+        condition: service_started
+    ports:
+      - 5432:5432
+    command: [ "postgres", "-c", "wal_level=logical" ]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.4
+    container_name: zookeeper-container
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    expose:
+      - 2181
+#    volumes:
+#      - ../docker/scripts:/scripts
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.4
+    container_name: kafka-container
+#    healthcheck:
+#      test: kafka-topics --bootstrap-server kafka:9092 --list
+#      interval: 10s
+#      timeout: 2s
+#      retries: 3
+    depends_on:
+      zookeeper:
+        condition: service_started
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: INNERLISTENER://kafka:29092,OUTERLISTENER://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INNERLISTENER:PLAINTEXT,OUTERLISTENER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INNERLISTENER
+      KAFKA_BROKER_ID: 11
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - 9092:9092
+#    env_file: .env.kafka
+    volumes:
+      - ../docker/scripts:/scripts
+
+  debezium-connect:
+    image: debezium/connect:2.7
+    container_name: debezium-connect-container
+    volumes:
+      - ../kafka-connect-exasol/jars:/etc/kafka-connect/jars
+    ports:
+      - 8083:8083
+    environment:
+      GROUP_ID: 1
+      BOOTSTRAP_SERVERS: kafka:29092
+      CONFIG_STORAGE_TOPIC: connect_configs
+      OFFSET_STORAGE_TOPIC: connect_offsets
+      STATUS_STORAGE_TOPIC: connect_statuses
+      ENABLE_DEBEZIUM_SCRIPTING: 'true'
+    depends_on:
+      - db
+
+
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.4.4
+    container_name: kafka-connect-container
+    volumes:
+      - ../docker/postgres-jar:/etc/kafka-connect/jars
+    ports:
+      - 8084:8083
+    environment:
+      CONNECT_GROUP_ID: kafka-connect
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_CONFIG_STORAGE_TOPIC: kafka-connect-config
+      CONNECT_OFFSET_STORAGE_TOPIC: kafka-connect-offset
+      CONNECT_STATUS_STORAGE_TOPIC: kafka-connect-status
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: localhost
+      CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars

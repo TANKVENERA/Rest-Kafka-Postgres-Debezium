@@ -1,0 +1,11 @@
+version: "2"
+services:
+  jdk:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+
+  mvn:
+    extends:
+      service: jdk
+    entrypoint: ./mvnw
