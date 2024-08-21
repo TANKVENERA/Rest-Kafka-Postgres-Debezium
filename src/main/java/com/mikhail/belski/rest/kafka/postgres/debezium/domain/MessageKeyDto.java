@@ -1,4 +1,4 @@
-package com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium;
+package com.mikhail.belski.rest.kafka.postgres.debezium.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class DebeziumMessageDto {
-    private ValuePayload payload;
+public class MessageKeyDto {
+
+    private KeyPayload payload;
 }

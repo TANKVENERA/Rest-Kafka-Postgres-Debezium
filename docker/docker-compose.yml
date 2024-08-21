@@ -42,8 +42,6 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
     expose:
       - 2181
-#    volumes:
-#      - ../docker/scripts:/scripts
 
   kafka:
     image: confluentinc/cp-kafka:7.4.4
@@ -63,6 +61,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: INNERLISTENER
       KAFKA_BROKER_ID: 11
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CLEANUP_POLICY: compact
     ports:
       - 9092:9092
 #    env_file: .env.kafka
@@ -72,8 +71,11 @@ services:
   debezium-connect:
     image: debezium/connect:2.7
     container_name: debezium-connect-container
-    volumes:
-      - ../kafka-connect-exasol/jars:/etc/kafka-connect/jars
+    healthcheck:
+      test: curl --fail http://localhost:8083/connectors/ || exit 1
+      interval: 30s
+      timeout: 2s
+      retries: 5
     ports:
       - 8083:8083
     environment:
@@ -86,10 +88,14 @@ services:
     depends_on:
       - db
 
-
   kafka-connect:
-    image: confluentinc/cp-kafka-connect:7.4.4
+    image: confluentinc/cp-kafka-connect:latest
     container_name: kafka-connect-container
+    healthcheck:
+      test: curl --fail http://localhost:8083/connectors/ || exit 1
+      interval: 30s
+      timeout: 2s
+      retries: 5
     volumes:
       - ../docker/postgres-jar:/etc/kafka-connect/jars
     ports:
@@ -107,3 +113,14 @@ services:
       CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
       CONNECT_REST_ADVERTISED_HOST_NAME: localhost
       CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
+
+  connectors-setup:
+    image: curlimages/curl:latest
+    volumes:
+      - ../docker/connector-config:/connector-config
+    depends_on:
+      debezium-connect:
+        condition: service_healthy
+      kafka-connect:
+        condition: service_healthy
+    command: ["sh", "-c", "/connector-config/scripts/debezium-ready.sh && /connector-config/scripts/jdbc-ready.sh"]

@@ -14,22 +14,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @AllArgsConstructor
-public class TransactionConsumerListener {
+public class TransactionListener {
 
     private static final String CONSUME_TRANSACTION_LOG_INFO_TEMPLATE =
-            "[Transaction: Client Id={}, Type={}, Price={}, Offset={}, Partition={} consumed]";
+            "[Transaction: Client Id={}, Type={}, Price={}, Partition={} consumed]";
 
     private CustomTransactionRepository customTransactionRepository;
     private TransactionTransformer transactionTransformer;
 
     @KafkaListener(topics = "${transaction.topic}", groupId = "transaction-group-id", containerFactory = "transactionConsumerContainerFactory")
-    public void clientListener(@Payload final TransactionDto transactionDto,
-            @Header(KafkaHeaders.OFFSET) final Long offset,
+    public void listenTransaction(@Payload final TransactionDto transaction,
             @Header(KafkaHeaders.RECEIVED_PARTITION_ID) final int receivedPartitionId) {
 
-        customTransactionRepository.saveIfClientExist(transactionTransformer.transform(transactionDto));
+        customTransactionRepository.saveIfClientExist(transactionTransformer.transform(transaction));
 
-        log.info(CONSUME_TRANSACTION_LOG_INFO_TEMPLATE, transactionDto.getClientId(),
-                transactionDto.getTransactionType(), transactionDto.getPrice(), offset, receivedPartitionId);
+        log.info(CONSUME_TRANSACTION_LOG_INFO_TEMPLATE, transaction.getClientId(),
+                transaction.getTransactionType(), transaction.getPrice(), receivedPartitionId);
     }
 }

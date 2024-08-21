@@ -16,9 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @AllArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
-
-    private static final String PUBLISH_TRANSACTION_LOG_INFO_TEMPLATE =
-            "[Transaction for client={} was published to partition={}]";
+    private static final String PUBLISH_TRANSACTION_TEMPLATE = "[Transaction: Client Id={}, Price={}, Created={}, Partition={} published]";
 
     private KafkaTemplate<String, TransactionDto> transactionProducerTemplate;
     private NewTopic transactionTopic;
@@ -30,12 +28,13 @@ public class TransactionServiceImpl implements TransactionService {
 
         final Long clientId = transaction.getClientId();
         final ListenableFuture<SendResult<String, TransactionDto>> sendResultFuture =
-                transactionProducerTemplate.send(transactionTopic.name(), String.valueOf(clientId), transaction);
+                transactionProducerTemplate.send(transactionTopic.name(), 2, String.valueOf(clientId), transaction);
 
         try {
             final RecordMetadata recordMetadata = sendResultFuture.get().getRecordMetadata();
 
-            log.info(PUBLISH_TRANSACTION_LOG_INFO_TEMPLATE, clientId, recordMetadata.partition());
+            log.info(PUBLISH_TRANSACTION_TEMPLATE, clientId, transaction.getPrice(), transaction.getCreatedAt(),
+                    recordMetadata.partition());
         } catch (InterruptedException | ExecutionException e) {
             log.error(e.getMessage());
         }

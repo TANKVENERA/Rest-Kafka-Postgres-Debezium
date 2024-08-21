@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -15,12 +14,12 @@ public class FraudClientDto {
 
     public FraudClientDto(){
         this.lastName = "";
-        this.totalPrice = valueOf(0);
+        this.totalAmount = valueOf(0);
     }
 
     private Long clientId;
     private String email;
     private String firstName;
     private String lastName;
-    private BigDecimal totalPrice;
+    private BigDecimal totalAmount;
 }

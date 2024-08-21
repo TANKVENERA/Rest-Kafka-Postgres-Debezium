@@ -1,4 +1,4 @@
-package com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium;
+package com.mikhail.belski.rest.kafka.postgres.debezium.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

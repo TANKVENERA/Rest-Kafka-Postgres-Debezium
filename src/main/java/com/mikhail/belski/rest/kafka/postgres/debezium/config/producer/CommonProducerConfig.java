@@ -1,4 +1,4 @@
-package com.mikhail.belski.rest.kafka.postgres.debezium.config.producerconfig;
+package com.mikhail.belski.rest.kafka.postgres.debezium.config.producer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,16 +11,15 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
-import com.mikhail.belski.rest.kafka.postgres.debezium.domain.ClientDto;
 
 @Configuration
-public class ClientProducerConfig {
+public class CommonProducerConfig {
 
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
 
     @Bean
-    public ProducerFactory<String, ClientDto> clientProducerFactory() {
+    public ProducerFactory<String, ?> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
@@ -30,7 +29,8 @@ public class ClientProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, ClientDto> clientProducerTemplate() {
-        return new KafkaTemplate<>(clientProducerFactory());
+    public KafkaTemplate<String, ?> transactionProducerTemplate(
+            final ProducerFactory<String, ?> producerFactory) {
+        return new KafkaTemplate<>(producerFactory);
     }
 }

@@ -1,0 +1,16 @@
+{
+  "name": "debezium-connector-client",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.hostname": "db",
+    "database.port": "5432",
+    "database.user": "mikki-rurk",
+    "database.password": "54321",
+    "database.dbname": "client-db",
+    "database.server.id": "184054",
+    "table.include.list": "public.client,public.client_transaction",
+    "topic.prefix": "change-event",
+    "plugin.name": "pgoutput",
+    "message.key.columns": "(.*).client:client_id;(.*).client_transaction:client_id"
+  }
+}

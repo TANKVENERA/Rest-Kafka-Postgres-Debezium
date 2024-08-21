@@ -1,18 +1,17 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.listener;
 
-import static com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium.Operation.CREATE;
-import static com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium.Operation.DELETE;
-import static com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium.Operation.UPDATE;
+import static com.mikhail.belski.rest.kafka.postgres.debezium.domain.Operation.DELETE;
 
-import java.util.LinkedHashMap;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-import com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium.DebeziumMessageDto;
-import com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium.MessageKeyDto;
-import com.mikhail.belski.rest.kafka.postgres.debezium.domain.debezium.Operation;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.ChangeEventMessageDto;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.ClientEventDto;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.MessageKeyDto;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.Operation;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,14 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @AllArgsConstructor
 public class ClientChangeEventListener {
-    private static final String EMAIL_FIELD = "email";
-    private static final String CREATE_CLIENT_EVENT = "[Client: Client Id={}, Email={} was created]";
-    private static final String UPDATE_CLIENT_EVENT = "[Client: Client Id={}, Email={} was updated]";
-    private static final String DELETE_CLIENT_EVENT = "[Client: Client Id={}, Email={} was deleted]";
+    private static final String CREATE_CLIENT_EVENT = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was created]";
+    private static final String UPDATE_CLIENT_EVENT = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was updated]";
+    private static final String DELETE_CLIENT_EVENT = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was deleted]";
     private static final String ERROR_MESSAGE = "Unsupported operation on Client: Client Id={}";
 
+    private ObjectMapper objectMapper;
+
     @KafkaListener(topics = "${client.change.event.topic}", groupId = "client-change-event-group-id", containerFactory = "clientChangeEventContainerFactory")
-    public void clientChangeEventListener(@Payload(required = false) final DebeziumMessageDto eventMessage,
+    public void listenClientChangeEvent(
+            @Payload(required = false) final ChangeEventMessageDto<ClientEventDto> eventMessage,
             @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) final MessageKeyDto key) {
 
         if (eventMessage == null) {
@@ -35,25 +36,29 @@ public class ClientChangeEventListener {
         }
         final String clientId = key.getPayload().getClientId();
         final Operation operation = eventMessage.getPayload().getOp();
+        final ClientEventDto beforeEvent = objectMapper.convertValue(eventMessage.getPayload().getBefore(), ClientEventDto.class);
+        final ClientEventDto afterEvent = objectMapper.convertValue(eventMessage.getPayload().getAfter(), ClientEventDto.class);
+        final ClientEventDto event = DELETE == operation ? beforeEvent : afterEvent;
+        final String email = event.getEmail();
+        final String firstName = event.getFirstName();
+        final String lastName = event.getLastName();
 
-        if (DELETE == operation) {
-            final LinkedHashMap<String, ?> beforeFields = eventMessage.getPayload().getBefore();
-            final String email = (String) beforeFields.get(EMAIL_FIELD);
+        switch (operation) {
+        case CREATE:
+            log.info(CREATE_CLIENT_EVENT, clientId, email, firstName, lastName);
+            break;
 
-            log.info(DELETE_CLIENT_EVENT, clientId, email);
-        }
-        else if (CREATE == operation || UPDATE == operation) {
-            final LinkedHashMap<String, ?> afterFields = eventMessage.getPayload().getAfter();
-            final String email = (String) afterFields.get(EMAIL_FIELD);
+        case UPDATE:
+            log.info(UPDATE_CLIENT_EVENT, clientId, email, firstName, lastName);
+            break;
 
-            if (CREATE == operation) {
-                log.info(CREATE_CLIENT_EVENT, clientId, email);
-            }
-            else {
-                log.info(UPDATE_CLIENT_EVENT, clientId, email);
-            }
-        } else {
+        case DELETE:
+            log.info(DELETE_CLIENT_EVENT, clientId, email, firstName, lastName);
+            break;
+
+        default:
             log.error(ERROR_MESSAGE, clientId);
+            break;
         }
     }
 

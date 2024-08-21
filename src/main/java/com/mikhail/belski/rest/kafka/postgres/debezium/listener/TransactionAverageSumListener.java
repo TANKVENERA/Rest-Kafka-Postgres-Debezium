@@ -5,6 +5,9 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.AverageSumDto;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.KeyPayload;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.MessageKeyDto;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,11 +16,12 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class TransactionAverageSumListener {
 
-    @KafkaListener(topics = "${transaction.average.sum.topic}", groupId = "transaction-average-sum-group-id", containerFactory = "transactionAverageSumContainerFactory")
-    public void transactionAverageSumEventListener(@Payload(required = false) final String batchData,
-            @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) final String key) {
+    private static final String AVERAGE_SUM_EVENT = "[Client: Client Id={}, has Average Sum={} for the last one minute]";
 
-        log.info("KEY " + key);
-        log.info("Received average sum event " + batchData);
+    @KafkaListener(topics = "${transaction.average.sum.topic}", groupId = "transaction-average-sum-group-id", containerFactory = "transactionAverageSumContainerFactory")
+    public void listenTransactionAverageSumEvent(@Payload(required = false) final AverageSumDto averageSum,
+            @Header(KafkaHeaders.RECEIVED_MESSAGE_KEY) final MessageKeyDto key) {
+
+        log.info(AVERAGE_SUM_EVENT, key.getPayload().getClientId(), averageSum.getPayload().getAverageSum());
     }
 }

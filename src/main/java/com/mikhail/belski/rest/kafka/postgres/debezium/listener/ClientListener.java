@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 @AllArgsConstructor
-public class ClientConsumerListener {
+public class ClientListener {
 
     private static final String CONSUME_CLIENT_LOG_INFO_TEMPLATE =
             "[Client: Client Id={}, Email={}, Offset={}, Partition={} consumed]";
@@ -23,13 +23,13 @@ public class ClientConsumerListener {
     private ClientTransformer clientTransformer;
 
     @KafkaListener(topics = "${client.topic}", groupId = "client-group-id", containerFactory = "clientConsumerContainerFactory")
-    public void clientConsumerListener(@Payload final ClientDto clientDto,
+    public void listenClient(@Payload final ClientDto client,
             @Header(KafkaHeaders.OFFSET) final Long offset,
             @Header(KafkaHeaders.RECEIVED_PARTITION_ID) final int receivedPartitionId) {
 
-        clientRepository.saveOrUpdate(clientTransformer.transform(clientDto));
+        clientRepository.saveOrUpdate(clientTransformer.transform(client));
 
-        log.info(CONSUME_CLIENT_LOG_INFO_TEMPLATE, clientDto.getClientId(), clientDto.getEmail(), offset,
+        log.info(CONSUME_CLIENT_LOG_INFO_TEMPLATE, client.getClientId(), client.getEmail(), offset,
                 receivedPartitionId);
     }
 

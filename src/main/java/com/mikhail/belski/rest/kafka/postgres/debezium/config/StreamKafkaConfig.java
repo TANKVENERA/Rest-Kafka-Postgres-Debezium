@@ -5,15 +5,12 @@ import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CON
 import static org.apache.kafka.common.serialization.Serdes.String;
 import static org.apache.kafka.common.serialization.Serdes.serdeFrom;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
-import static org.apache.kafka.streams.StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG;
-import static org.apache.kafka.streams.StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG;
 import static com.mikhail.belski.rest.kafka.postgres.debezium.util.UtilHelper.getPriceWithScale;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Serde;
-import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.kstream.Consumed;
@@ -34,15 +31,14 @@ import org.springframework.kafka.config.KafkaStreamsConfiguration;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import com.mikhail.belski.rest.kafka.postgres.debezium.domain.ClientDto;
-import com.mikhail.belski.rest.kafka.postgres.debezium.domain.ClientTransactionJointDto;
+import com.mikhail.belski.rest.kafka.postgres.debezium.domain.ClientTransactionJoint;
 import com.mikhail.belski.rest.kafka.postgres.debezium.domain.FraudClientDto;
 import com.mikhail.belski.rest.kafka.postgres.debezium.domain.TransactionDto;
-import com.mikhail.belski.rest.kafka.postgres.debezium.domain.FraudSerde;
 
 @Configuration
 @EnableKafka
 @EnableKafkaStreams
-public class StreamsKafkaConfig {
+public class StreamKafkaConfig {
     private final Serde<String> keySerDe = String();
     private final Serde<ClientDto> valueClientSerDe = serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(ClientDto.class));
     private final Serde<TransactionDto> valueTransactionSerDe = serdeFrom(new JsonSerializer<>(), new JsonDeserializer<>(TransactionDto.class));
@@ -66,9 +62,7 @@ public class StreamsKafkaConfig {
         Map<String, Object> props = new HashMap<>();
         props.put(APPLICATION_ID_CONFIG, "streams-app");
         props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
-        props.put(DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, FraudSerde.class.getName());
-        
+
         return new KafkaStreamsConfiguration(props);
     }
 
@@ -96,6 +90,7 @@ public class StreamsKafkaConfig {
     }
 
     private ClientDto populateClient(final ClientDto client, final ClientDto aggr) {
+        aggr.setClientId(client.getClientId());
         aggr.setEmail(client.getEmail());
         aggr.setFirstName(client.getFirstName());
         aggr.setLastName(client.getLastName());
@@ -103,18 +98,19 @@ public class StreamsKafkaConfig {
         return aggr;
     }
 
-    private FraudClientDto populateFraudClient(final ClientTransactionJointDto jointData, final FraudClientDto aggr) {
+    private FraudClientDto populateFraudClient(final ClientTransactionJoint jointData, final FraudClientDto aggr) {
+        aggr.setClientId(jointData.getClientId());
         aggr.setEmail(jointData.getEmail());
         aggr.setFirstName(jointData.getFirstName());
         aggr.setLastName(jointData.getLastName());
 
-        aggr.setTotalPrice(aggr.getTotalPrice().add(jointData.getTransactionAmount()));
+        aggr.setTotalAmount(aggr.getTotalAmount().add(jointData.getTransactionAmount()));
 
         return aggr;
     }
 
-    private ClientTransactionJointDto populateJointData(final TransactionDto transaction, final ClientDto client) {
-        return ClientTransactionJointDto.builder()
+    private ClientTransactionJoint populateJointData(final TransactionDto transaction, final ClientDto client) {
+        return ClientTransactionJoint.builder()
                 .clientId(client.getClientId())
                 .email(client.getEmail())
                 .firstName(client.getFirstName())
@@ -125,7 +121,7 @@ public class StreamsKafkaConfig {
 
     private boolean isCustomerFraud(final FraudClientDto fraudClient) {
 
-        return 0 < fraudClient.getTotalPrice().compareTo(valueOf(1000)) && fraudClient.getLastName().length() > 8;
+        return 0 < fraudClient.getTotalAmount().compareTo(valueOf(1000)) && fraudClient.getLastName().length() > 8;
 
     }
 

@@ -1,4 +1,4 @@
-package com.mikhail.belski.rest.kafka.postgres.debezium.config;
+package com.mikhail.belski.rest.kafka.postgres.debezium.config.topic;
 
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,25 +12,17 @@ public class ClientTopicConfig {
     @Value(value = "${client.topic}")
     private String clientTopic;
 
-    @Value(value = "${fraud.topic}")
-    private String fraudTopic;
-
     @Value(value = "${client.change.event.topic}")
     private String clientChangeEventTopic;
 
 
     @Bean
     public NewTopic clientTopic() {
-        return TopicBuilder.name(clientTopic).partitions(1).replicas(1).compact().build();
+        return TopicBuilder.name(clientTopic).partitions(3).replicas(1).compact().build();
     }
 
     @Bean
-    public NewTopic fraudTopic() {
-        return TopicBuilder.name(fraudTopic).partitions(1).replicas(1).compact().build();
-    }
-
-    @Bean
-    public NewTopic changeClientEventTopic() {
+    public NewTopic clientChangeEventTopic() {
         return TopicBuilder.name(clientChangeEventTopic).partitions(1).replicas(1).compact().build();
     }
 }

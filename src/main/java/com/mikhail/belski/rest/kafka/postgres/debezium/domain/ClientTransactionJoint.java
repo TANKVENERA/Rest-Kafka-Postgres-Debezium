@@ -8,9 +8,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ClientTransactionJointDto {
+public class ClientTransactionJoint {
 
     private Long clientId;
     private String email;
