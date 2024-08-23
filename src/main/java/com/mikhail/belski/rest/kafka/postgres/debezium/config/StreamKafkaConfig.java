@@ -5,7 +5,7 @@ import static org.apache.kafka.clients.CommonClientConfigs.BOOTSTRAP_SERVERS_CON
 import static org.apache.kafka.common.serialization.Serdes.String;
 import static org.apache.kafka.common.serialization.Serdes.serdeFrom;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
-import static com.mikhail.belski.rest.kafka.postgres.debezium.util.UtilHelper.getPriceWithScale;
+import static com.mikhail.belski.rest.kafka.postgres.debezium.util.UtilHelper.setScale;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public class StreamKafkaConfig {
     }
 
     @Bean
-    public KTable<Windowed<String>, FraudClientDto> buildFraudInfoPipeline(final StreamsBuilder streamsBuilder) {
+    public KTable<Windowed<String>, FraudClientDto> buildFraudClientInfoPipeline(final StreamsBuilder streamsBuilder) {
         final KStream<String, ClientDto> clientStream = streamsBuilder.stream(clientTopic, Consumed.with(keySerDe, valueClientSerDe));
         final KTable<String, ClientDto> clientTable = clientStream
                 .groupByKey()
@@ -115,14 +115,12 @@ public class StreamKafkaConfig {
                 .email(client.getEmail())
                 .firstName(client.getFirstName())
                 .lastName(client.getLastName())
-                .transactionAmount(getPriceWithScale(transaction.getPrice()).multiply(valueOf(transaction.getQuantity())))
+                .transactionAmount(setScale(valueOf(transaction.getPrice())).multiply(valueOf(transaction.getQuantity())))
                 .build();
     }
 
     private boolean isCustomerFraud(final FraudClientDto fraudClient) {
 
         return 0 < fraudClient.getTotalAmount().compareTo(valueOf(1000)) && fraudClient.getLastName().length() > 8;
-
     }
-
 }

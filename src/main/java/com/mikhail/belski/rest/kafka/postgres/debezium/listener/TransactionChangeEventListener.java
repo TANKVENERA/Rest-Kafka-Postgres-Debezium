@@ -20,10 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @AllArgsConstructor
 public class TransactionChangeEventListener {
-    private static final String CREATE_TRANSACTION_EVENT = "[Transaction: Client Id={}, Type={}, Transaction Amount={} was created]";
-    private static final String UPDATE_TRANSACTION_EVENT = "[Transaction: Client Id={}, Type={}, Transaction Amount={} was updated]";
-    private static final String DELETE_TRANSACTION_EVENT = "[Transaction: Client Id={}, Type={}, Transaction Amount Price={} was deleted]";
-    private static final String ERROR_MESSAGE = "Unsupported operation on Transaction: Client Id={}";
+    private static final String CREATE_TRANSACTION_EVENT_TEMPLATE = "[Transaction: Client Id={}, Type={}, Transaction Amount={} was created]";
+    private static final String UPDATE_TRANSACTION_EVENT_TEMPLATE = "[Transaction: Client Id={}, Type={}, Transaction Amount={} was updated]";
+    private static final String DELETE_TRANSACTION_EVENT_TEMPLATE = "[Transaction: Client Id={}, Type={}, Transaction Amount Price={} was deleted]";
+    private static final String ERROR_MESSAGE_TEMPLATE = "Unsupported operation on Transaction: Client Id={}";
 
     private ObjectMapper objectMapper;
 
@@ -44,19 +44,19 @@ public class TransactionChangeEventListener {
 
         switch (operation) {
             case CREATE:
-                log.info(CREATE_TRANSACTION_EVENT, clientId, transactionType, transactionAmount);
+                log.info(CREATE_TRANSACTION_EVENT_TEMPLATE, clientId, transactionType, transactionAmount);
                 break;
 
             case UPDATE:
-                log.info(UPDATE_TRANSACTION_EVENT, clientId, transactionType, transactionAmount);
+                log.info(UPDATE_TRANSACTION_EVENT_TEMPLATE, clientId, transactionType, transactionAmount);
                 break;
 
             case DELETE:
-                log.info(DELETE_TRANSACTION_EVENT, clientId, transactionType, transactionAmount);
+                log.info(DELETE_TRANSACTION_EVENT_TEMPLATE, clientId, transactionType, transactionAmount);
                 break;
 
             default:
-                log.error(ERROR_MESSAGE, clientId);
+                log.error(ERROR_MESSAGE_TEMPLATE, clientId);
                 break;
         }
     }

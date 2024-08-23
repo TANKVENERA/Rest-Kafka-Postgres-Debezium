@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AverageSumDto {
+public class TransactionAverageSumDto {
 
     private AverageSumPayload payload;
 }

@@ -10,10 +10,10 @@ import org.springframework.kafka.config.TopicBuilder;
 public class FraudClientTopic {
 
     @Value(value = "${fraud.topic}")
-    private String fraudTopic;
+    private String fraudClientTopic;
 
     @Bean
     public NewTopic fraudTopic() {
-        return TopicBuilder.name(fraudTopic).partitions(1).replicas(1).compact().build();
+        return TopicBuilder.name(fraudClientTopic).partitions(1).replicas(1).compact().build();
     }
 }

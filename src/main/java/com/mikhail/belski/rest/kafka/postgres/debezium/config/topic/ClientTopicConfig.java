@@ -12,17 +12,8 @@ public class ClientTopicConfig {
     @Value(value = "${client.topic}")
     private String clientTopic;
 
-    @Value(value = "${client.change.event.topic}")
-    private String clientChangeEventTopic;
-
-
     @Bean
     public NewTopic clientTopic() {
         return TopicBuilder.name(clientTopic).partitions(3).replicas(1).compact().build();
-    }
-
-    @Bean
-    public NewTopic clientChangeEventTopic() {
-        return TopicBuilder.name(clientChangeEventTopic).partitions(1).replicas(1).compact().build();
     }
 }

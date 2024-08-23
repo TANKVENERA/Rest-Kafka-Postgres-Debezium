@@ -1,6 +1,7 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.config.consumer;
 
 import java.util.HashMap;
+import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;

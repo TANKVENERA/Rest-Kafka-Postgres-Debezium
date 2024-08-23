@@ -19,10 +19,10 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @AllArgsConstructor
 public class ClientChangeEventListener {
-    private static final String CREATE_CLIENT_EVENT = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was created]";
-    private static final String UPDATE_CLIENT_EVENT = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was updated]";
-    private static final String DELETE_CLIENT_EVENT = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was deleted]";
-    private static final String ERROR_MESSAGE = "Unsupported operation on Client: Client Id={}";
+    private static final String CREATE_CLIENT_EVENT_TEMPLATE = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was created]";
+    private static final String UPDATE_CLIENT_EVENT_TEMPLATE = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was updated]";
+    private static final String DELETE_CLIENT_EVENT_TEMPLATE = "[Client: Client Id={}, Email={}, First Name={}, Last Name={} was deleted]";
+    private static final String ERROR_MESSAGE_TEMPLATE = "Unsupported operation on Client: Client Id={}";
 
     private ObjectMapper objectMapper;
 
@@ -45,19 +45,19 @@ public class ClientChangeEventListener {
 
         switch (operation) {
         case CREATE:
-            log.info(CREATE_CLIENT_EVENT, clientId, email, firstName, lastName);
+            log.info(CREATE_CLIENT_EVENT_TEMPLATE, clientId, email, firstName, lastName);
             break;
 
         case UPDATE:
-            log.info(UPDATE_CLIENT_EVENT, clientId, email, firstName, lastName);
+            log.info(UPDATE_CLIENT_EVENT_TEMPLATE, clientId, email, firstName, lastName);
             break;
 
         case DELETE:
-            log.info(DELETE_CLIENT_EVENT, clientId, email, firstName, lastName);
+            log.info(DELETE_CLIENT_EVENT_TEMPLATE, clientId, email, firstName, lastName);
             break;
 
         default:
-            log.error(ERROR_MESSAGE, clientId);
+            log.error(ERROR_MESSAGE_TEMPLATE, clientId);
             break;
         }
     }

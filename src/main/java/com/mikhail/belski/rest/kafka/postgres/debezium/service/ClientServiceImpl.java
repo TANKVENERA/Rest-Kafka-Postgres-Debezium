@@ -1,8 +1,6 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.service;
 
-import java.util.concurrent.ExecutionException;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -15,24 +13,22 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @AllArgsConstructor
 public class ClientServiceImpl implements ClientService {
-    private static final String PUBLISH_CLIENT_TEMPLATE = "[Client: Client Id={}, Email={}, First Name={}, Last Name={}, Partition={} published]";
+    private static final String SUCCESS_MESSAGE_TEMPLATE =
+            "[Client: Client Id={}, Email={}, First Name={}, Last Name={}, Partition={} published]";
+    private static final String FAILURE_MESSAGE_TEMPLATE = "[Failed to send Client message for Client Id={}. Error={}]";
 
-    private KafkaTemplate<String, ClientDto> clientProducerTemplate;
+    private KafkaTemplate<Long, Object> kafkaTemplate;
     private NewTopic clientTopic;
 
     @Override
-    public void publishClient(final ClientDto clientDto) {
-        final ListenableFuture<SendResult<String, ClientDto>> sendResultFuture =
-                clientProducerTemplate.send(clientTopic.name(), 2, String.valueOf(clientDto.getClientId()), clientDto);
+    public void publishClient(final ClientDto client) {
+        final Long clientId = client.getClientId();
+        final ListenableFuture<SendResult<Long, Object>> sendResultFuture =
+                kafkaTemplate.send(clientTopic.name(), 2, clientId, client);
 
-        try {
-            final RecordMetadata recordMetadata = sendResultFuture.get().getRecordMetadata();
-
-            log.info(PUBLISH_CLIENT_TEMPLATE, clientDto.getClientId(), clientDto.getEmail(), clientDto.getFirstName(),
-                    clientDto.getLastName(), recordMetadata.partition());
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.getMessage());
-        }
-
+        sendResultFuture.addCallback(
+                success -> log.info(SUCCESS_MESSAGE_TEMPLATE, clientId, client.getEmail(),
+                        client.getFirstName(), client.getLastName(), success == null ? null : success.getRecordMetadata().partition()),
+                failure -> log.error(FAILURE_MESSAGE_TEMPLATE, clientId, failure.getMessage()));
     }
 }

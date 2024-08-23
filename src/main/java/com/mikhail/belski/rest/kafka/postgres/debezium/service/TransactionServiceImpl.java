@@ -1,9 +1,9 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.service;
 
-import java.time.LocalDateTime;
-import java.util.concurrent.ExecutionException;
+import static java.time.LocalDateTime.now;
+
+import java.time.Clock;
 import org.apache.kafka.clients.admin.NewTopic;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
@@ -16,27 +16,23 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @AllArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
-    private static final String PUBLISH_TRANSACTION_TEMPLATE = "[Transaction: Client Id={}, Price={}, Created={}, Partition={} published]";
+    private static final String SUCCESS_MESSAGE_TEMPLATE = "[Transaction: Client Id={}, Price={}, Created={}, Partition={} published]";
+    private static final String FAILURE_MESSAGE_TEMPLATE = "[Failed to send Transaction message for Client Id={}. Error={}]";
 
-    private KafkaTemplate<String, TransactionDto> transactionProducerTemplate;
+    private KafkaTemplate<Long, Object> kafkaTemplate;
     private NewTopic transactionTopic;
+    private Clock clock;
 
     @Override
     public void publishTransaction(final TransactionDto transaction) {
-        final LocalDateTime now = LocalDateTime.now();
-        transaction.setCreatedAt(now);
+        transaction.setCreatedAt(now(clock));
 
         final Long clientId = transaction.getClientId();
-        final ListenableFuture<SendResult<String, TransactionDto>> sendResultFuture =
-                transactionProducerTemplate.send(transactionTopic.name(), 2, String.valueOf(clientId), transaction);
+        final ListenableFuture<SendResult<Long, Object>> sendResultFuture =
+                kafkaTemplate.send(transactionTopic.name(), 2, clientId, transaction);
 
-        try {
-            final RecordMetadata recordMetadata = sendResultFuture.get().getRecordMetadata();
-
-            log.info(PUBLISH_TRANSACTION_TEMPLATE, clientId, transaction.getPrice(), transaction.getCreatedAt(),
-                    recordMetadata.partition());
-        } catch (InterruptedException | ExecutionException e) {
-            log.error(e.getMessage());
-        }
+        sendResultFuture.addCallback(success -> log.info(SUCCESS_MESSAGE_TEMPLATE, clientId, transaction.getPrice(),
+                        transaction.getCreatedAt(), success == null ? null : success.getRecordMetadata().partition()),
+                failure -> log.error(FAILURE_MESSAGE_TEMPLATE, clientId, failure.getMessage()));
     }
 }
