@@ -7,6 +7,7 @@ import static org.apache.kafka.common.serialization.Serdes.serdeFrom;
 import static org.apache.kafka.streams.StreamsConfig.APPLICATION_ID_CONFIG;
 import static com.mikhail.belski.rest.kafka.postgres.debezium.util.UtilHelper.setScale;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,9 +59,9 @@ public class StreamKafkaConfig {
     private String transactionTopic;
 
     @Bean(name = KafkaStreamsDefaultConfiguration.DEFAULT_STREAMS_CONFIG_BEAN_NAME)
-    KafkaStreamsConfiguration kStreamsConfig() {
+    public KafkaStreamsConfiguration kStreamsConfig() {
         Map<String, Object> props = new HashMap<>();
-        props.put(APPLICATION_ID_CONFIG, "streams-app");
+        props.put(APPLICATION_ID_CONFIG, "fraud-client-streams-app");
         props.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
 
         return new KafkaStreamsConfiguration(props);
@@ -120,7 +121,9 @@ public class StreamKafkaConfig {
     }
 
     private boolean isCustomerFraud(final FraudClientDto fraudClient) {
+        final BigDecimal total = fraudClient.getTotalAmount();
+        final String lastName = fraudClient.getLastName();
 
-        return 0 < fraudClient.getTotalAmount().compareTo(valueOf(1000)) && fraudClient.getLastName().length() > 8;
+        return 0 < total.compareTo(valueOf(1000)) && ( lastName == null || lastName.length() > 8);
     }
 }

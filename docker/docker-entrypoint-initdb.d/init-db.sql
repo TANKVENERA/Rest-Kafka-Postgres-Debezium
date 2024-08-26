@@ -21,5 +21,5 @@ CREATE TABLE client_transaction (
 );
 ALTER TABLE client_transaction REPLICA IDENTITY FULL;
 
-ALTER TABLE client_transaction
-    ADD CONSTRAINT fk_client_id FOREIGN KEY (client_id) REFERENCES client(client_id);
+-- ALTER TABLE client_transaction
+--     ADD CONSTRAINT fk_client_id FOREIGN KEY (client_id) REFERENCES client(client_id);

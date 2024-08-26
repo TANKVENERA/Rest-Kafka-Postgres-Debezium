@@ -27,8 +27,8 @@ public class ClientServiceImpl implements ClientService {
                 kafkaTemplate.send(clientTopic.name(), 2, clientId, client);
 
         sendResultFuture.addCallback(
-                success -> log.info(SUCCESS_MESSAGE_TEMPLATE, clientId, client.getEmail(),
-                        client.getFirstName(), client.getLastName(), success == null ? null : success.getRecordMetadata().partition()),
+                success -> log.info(SUCCESS_MESSAGE_TEMPLATE, clientId, client.getEmail(), client.getFirstName(),
+                        client.getLastName(), success == null ? null : success.getRecordMetadata().partition()),
                 failure -> log.error(FAILURE_MESSAGE_TEMPLATE, clientId, failure.getMessage()));
     }
 }

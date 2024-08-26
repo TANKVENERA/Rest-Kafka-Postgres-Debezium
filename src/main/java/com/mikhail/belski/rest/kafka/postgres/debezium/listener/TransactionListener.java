@@ -1,12 +1,10 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.listener;
 
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 import com.mikhail.belski.rest.kafka.postgres.debezium.domain.TransactionDto;
-import com.mikhail.belski.rest.kafka.postgres.debezium.repository.CustomTransactionRepository;
+import com.mikhail.belski.rest.kafka.postgres.debezium.repository.TransactionRepository;
 import com.mikhail.belski.rest.kafka.postgres.debezium.transformer.TransactionTransformer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,19 +15,17 @@ import lombok.extern.slf4j.Slf4j;
 public class TransactionListener {
 
     private static final String CONSUME_TRANSACTION_LOG_INFO_TEMPLATE =
-            "[Transaction: Client Id={}, Type={}, Price={}, Offset={}, Partition={} consumed]";
+            "[Transaction: Client Id={}, Type={}, Price={} consumed]";
 
-    private CustomTransactionRepository customTransactionRepository;
+    private TransactionRepository transactionRepository;
     private TransactionTransformer transactionTransformer;
 
     @KafkaListener(topics = "${transaction.topic}", groupId = "transaction-group-id", containerFactory = "transactionConsumerContainerFactory")
-    public void listenTransaction(@Payload final TransactionDto transaction,
-            @Header(KafkaHeaders.OFFSET) final Long offset,
-            @Header(KafkaHeaders.RECEIVED_PARTITION_ID) final int receivedPartitionId) {
+    public void listenTransaction(@Payload final TransactionDto transaction) {
 
-        customTransactionRepository.saveIfClientExist(transactionTransformer.transform(transaction));
+        transactionRepository.save(transactionTransformer.transform(transaction));
 
-        log.info(CONSUME_TRANSACTION_LOG_INFO_TEMPLATE, transaction.getClientId(),
-                transaction.getTransactionType(), transaction.getPrice(), offset, receivedPartitionId);
+        log.info(CONSUME_TRANSACTION_LOG_INFO_TEMPLATE, transaction.getClientId(), transaction.getTransactionType(),
+                transaction.getPrice());
     }
 }
