@@ -1,11 +1,12 @@
-version: "2.1"
+name: rest-kafka-postgres-debezium-docker-app
+
 services:
   app:
     image: spring-boot-runner
     container_name: spring-boot-runner-container
-#    depends_on:
-#      kafka:
-#        condition: service_healthy
+    depends_on:
+      connectors-setup:
+        condition: service_completed_successfully
     extends:
       file: docker-compose.build.yml
       service: mvn
@@ -16,24 +17,6 @@ services:
     environment:
       JAVA_TOOL_OPTIONS: -Dspring-boot.run.jvmArguments="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005"
     env_file: .env
-    depends_on:
-      - db
-
-  db:
-    image: postgres:13.1-alpine
-    container_name: db
-    volumes:
-      - ../docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d/
-    environment:
-      - POSTGRES_USER=mikki-rurk
-      - POSTGRES_PASSWORD=54321
-      - POSTGRES_DB=client-db
-    depends_on:
-      kafka:
-        condition: service_started
-    ports:
-      - 5432:5432
-    command: [ "postgres", "-c", "wal_level=logical" ]
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.4
@@ -46,27 +29,35 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.4.4
     container_name: kafka-container
-#    healthcheck:
-#      test: kafka-topics --bootstrap-server kafka:9092 --list
-#      interval: 10s
-#      timeout: 2s
-#      retries: 3
+    healthcheck:
+      test: kafka-topics --bootstrap-server kafka:9092 --list
+      interval: 30s
+      timeout: 2s
+      retries: 3
     depends_on:
       zookeeper:
         condition: service_started
-    environment:
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: INNERLISTENER://kafka:29092,OUTERLISTENER://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INNERLISTENER:PLAINTEXT,OUTERLISTENER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INNERLISTENER
-      KAFKA_BROKER_ID: 11
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CLEANUP_POLICY: compact
+    env_file: .env.kafka
     ports:
       - 9092:9092
-#    env_file: .env.kafka
+
+  db:
+    image: postgres:13.1-alpine
+    container_name: db
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 30s
+      timeout: 2s
+      retries: 3
     volumes:
-      - ../docker/scripts:/scripts
+      - ../docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d/
+    env_file: .env.db
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - 5432:5432
+    command: [ "postgres", "-c", "wal_level=logical" ]
 
   debezium-connect:
     image: debezium/connect:2.7
@@ -75,18 +66,13 @@ services:
       test: curl --fail http://localhost:8083/connectors/ || exit 1
       interval: 30s
       timeout: 2s
-      retries: 5
+      retries: 3
     ports:
       - 8083:8083
-    environment:
-      GROUP_ID: 1
-      BOOTSTRAP_SERVERS: kafka:29092
-      CONFIG_STORAGE_TOPIC: connect_configs
-      OFFSET_STORAGE_TOPIC: connect_offsets
-      STATUS_STORAGE_TOPIC: connect_statuses
-      ENABLE_DEBEZIUM_SCRIPTING: 'true'
+    env_file: .env.debezium.connect
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   kafka-connect:
     image: confluentinc/cp-kafka-connect:7.4.4
@@ -95,32 +81,24 @@ services:
       test: curl --fail http://localhost:8083/connectors/ || exit 1
       interval: 30s
       timeout: 2s
-      retries: 5
+      retries: 3
     volumes:
-      - ../docker/postgres-jar:/etc/kafka-connect/jars
+      - ../docker/jars:/etc/kafka-connect/jars
     ports:
       - 8084:8083
-    environment:
-      CONNECT_GROUP_ID: kafka-connect
-      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
-      CONNECT_CONFIG_STORAGE_TOPIC: kafka-connect-config
-      CONNECT_OFFSET_STORAGE_TOPIC: kafka-connect-offset
-      CONNECT_STATUS_STORAGE_TOPIC: kafka-connect-status
-      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
-      CONNECT_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
-      CONNECT_REST_ADVERTISED_HOST_NAME: localhost
-      CONNECT_PLUGIN_PATH: /usr/share/java,/etc/kafka-connect/jars
+    env_file: .env.kafka.connect
+    depends_on:
+      db:
+        condition: service_healthy
 
   connectors-setup:
     image: curlimages/curl:latest
+    container_name: connectors-setup-container
     volumes:
-      - ../docker/connector-config:/connector-config
+      - ../docker/connector-setup-config:/connector-setup-config
     depends_on:
       debezium-connect:
         condition: service_healthy
       kafka-connect:
         condition: service_healthy
-    command: ["sh", "-c", "/connector-config/scripts/debezium-ready.sh && /connector-config/scripts/jdbc-ready.sh"]
+    command: ["sh", "-c", "/connector-setup-config/scripts/debezium-ready.sh && /connector-setup-config/scripts/jdbc-ready.sh"]
