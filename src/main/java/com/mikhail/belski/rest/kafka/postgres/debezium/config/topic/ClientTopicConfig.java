@@ -14,6 +14,6 @@ public class ClientTopicConfig {
 
     @Bean
     public NewTopic clientTopic() {
-        return TopicBuilder.name(clientTopic).partitions(3).replicas(1).compact().build();
+        return TopicBuilder.name(clientTopic).partitions(3).replicas(1).build();
     }
 }

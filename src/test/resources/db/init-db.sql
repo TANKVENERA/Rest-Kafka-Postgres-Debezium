@@ -11,12 +11,12 @@ ALTER TABLE clients REPLICA IDENTITY FULL;
 
 CREATE TABLE transactions (
                         id SERIAL PRIMARY KEY,
-                        client_id INTEGER NOT NULL,
                         bank TEXT,
                         transaction_type TEXT,
                         quantity INTEGER,
                         price FLOAT,
                         transaction_amount FLOAT,
-                        created_at TIMESTAMP
+                        created_at TIMESTAMP,
+                        client_id INTEGER NOT NULL
 );
 ALTER TABLE transactions REPLICA IDENTITY FULL;

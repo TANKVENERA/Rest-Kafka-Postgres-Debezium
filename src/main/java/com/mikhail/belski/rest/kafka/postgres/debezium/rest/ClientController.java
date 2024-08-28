@@ -1,5 +1,6 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.rest;
 
+import javax.validation.Valid;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,7 +16,7 @@ public class ClientController {
     private ClientService clientService;
 
     @PostMapping(path = "/client")
-    public void publishClient(@RequestBody final ClientDto clientDto) {
+    public void publishClient(@Valid @RequestBody final ClientDto clientDto) {
         clientService.publishClient(clientDto);
     }
 }

@@ -14,6 +14,6 @@ public class TransactionTopicConfig {
 
     @Bean
     public NewTopic transactionTopic() {
-        return TopicBuilder.name(transactionTopic).partitions(3).replicas(1).compact().build();
+        return TopicBuilder.name(transactionTopic).partitions(3).replicas(1).build();
     }
 }
