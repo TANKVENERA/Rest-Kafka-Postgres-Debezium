@@ -14,6 +14,6 @@ public class FraudClientTopic {
 
     @Bean
     public NewTopic fraudTopic() {
-        return TopicBuilder.name(fraudClientTopic).partitions(1).replicas(1).compact().build();
+        return TopicBuilder.name(fraudClientTopic).partitions(1).replicas(1).build();
     }
 }

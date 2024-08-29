@@ -1,13 +1,17 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.entity;
 
+import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
+@Builder
 @Entity
 @Table(name = "clients")
 @NoArgsConstructor
@@ -22,4 +26,7 @@ public class ClientEntity {
     private String firstName;
 
     private String lastName;
+
+    @OneToMany
+    private List<TransactionEntity> transactions;
 }
