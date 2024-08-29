@@ -8,9 +8,9 @@
     "database.password": "54321",
     "database.dbname": "client-db",
     "database.server.id": "184054",
-    "table.include.list": "public.client,public.client_transaction",
+    "table.include.list": "public.clients,public.transactions",
     "topic.prefix": "change-event",
     "plugin.name": "pgoutput",
-    "message.key.columns": "(.*).client:client_id;(.*).client_transaction:client_id"
+    "message.key.columns": "(.*).clients:client_id;(.*).transactions:client_id"
   }
 }

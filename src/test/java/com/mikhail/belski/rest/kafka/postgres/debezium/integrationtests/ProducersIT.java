@@ -112,7 +112,7 @@ public class ProducersIT {
     }
 
     @Test
-    @Sql(statements = "TRUNCATE client", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "TRUNCATE clients", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldPublishClientsAndConsumeSequentially() {
         EXPECTED_CLIENTS.forEach(cl -> testRestTemplate.postForEntity(buildUri("/client"), cl, Void.class));
 
@@ -124,7 +124,7 @@ public class ProducersIT {
     }
 
     @Test
-    @Sql(statements = "TRUNCATE client_transaction", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    @Sql(statements = "TRUNCATE transactions", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
     public void shouldPublishTransactionsAndConsumeSequentially() {
         EXPECTED_TRANSACTIONS.forEach(tr -> testRestTemplate.postForEntity(buildUri("/transaction"), tr, Void.class));
 
@@ -135,7 +135,7 @@ public class ProducersIT {
     }
 
     @Test
-    @Sql(statements = "TRUNCATE client, client_transaction", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(statements = "TRUNCATE clients, transactions", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
     public void shouldConsumeFromFraudTopicWhenTotalPriceGreaterThen1000() {
         testRestTemplate.postForEntity(buildUri("/client"), CLIENT_4, Void.class);
         verify(clientListener, timeout(10000).times(1)).listenClient(clientCaptor.capture());

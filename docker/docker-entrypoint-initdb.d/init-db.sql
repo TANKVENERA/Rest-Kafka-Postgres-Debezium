@@ -1,15 +1,15 @@
-DROP TABLE IF EXISTS client;
-DROP TABLE IF EXISTS client_transaction;
+DROP TABLE IF EXISTS clients;
+DROP TABLE IF EXISTS transactions;
 
-CREATE TABLE client (
+CREATE TABLE clients (
                 client_id INTEGER PRIMARY KEY,
                 email TEXT,
                 first_name TEXT,
                 last_name TEXT
 );
-ALTER TABLE client REPLICA IDENTITY FULL;
+ALTER TABLE clients REPLICA IDENTITY FULL;
 
-CREATE TABLE client_transaction (
+CREATE TABLE transactions (
                         id SERIAL PRIMARY KEY,
                         client_id INTEGER NOT NULL,
                         bank TEXT,
@@ -19,7 +19,4 @@ CREATE TABLE client_transaction (
                         transaction_amount FLOAT,
                         created_at TIMESTAMP
 );
-ALTER TABLE client_transaction REPLICA IDENTITY FULL;
-
--- ALTER TABLE client_transaction
---     ADD CONSTRAINT fk_client_id FOREIGN KEY (client_id) REFERENCES client(client_id);
+ALTER TABLE transactions REPLICA IDENTITY FULL;
