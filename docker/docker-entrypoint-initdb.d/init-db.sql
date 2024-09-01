@@ -12,7 +12,7 @@ ALTER TABLE clients REPLICA IDENTITY FULL;
 CREATE TABLE transactions (
                         id SERIAL PRIMARY KEY,
                         bank TEXT,
-                        transaction_type TEXT,
+                        transaction_type TEXT NOT NULL,
                         quantity INTEGER,
                         price FLOAT,
                         transaction_amount FLOAT,
