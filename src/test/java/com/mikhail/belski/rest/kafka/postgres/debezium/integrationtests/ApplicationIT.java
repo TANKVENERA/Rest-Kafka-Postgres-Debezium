@@ -64,8 +64,8 @@ public class ApplicationIT {
     private static final TransactionDto TRANSACTION_1 = TransactionDto.builder().clientId(3L).bank("PKO").transactionType(INCOME).price(12.345).quantity(1).createdAt(CREATED_TIME).build();
     private static final TransactionDto TRANSACTION_2 = TransactionDto.builder().clientId(3L).bank("PKO").transactionType(INCOME).price(250.00).quantity(1).createdAt(CREATED_TIME).build();
     private static final TransactionDto TRANSACTION_3 = TransactionDto.builder().clientId(3L).bank("PKO").transactionType(INCOME).price(300.50).quantity(1).createdAt(CREATED_TIME).build();
-    private static final TransactionDto INVALID_TRANSACTION = TransactionDto.builder().clientId(3L).bank("PKO").transactionType(
-            TransactionType.getType("FAKE-TRANSACTION-TYPE")).price(300.50).quantity(1).createdAt(CREATED_TIME).build();
+    private static final TransactionDto INVALID_TRANSACTION = TransactionDto.builder().clientId(1000000000000L).bank("PKO").transactionType(
+            TransactionType.valueOf("INCOME")).price(300.50).quantity(1).createdAt(CREATED_TIME).build();
 
     private static final TransactionDto FRAUD_TRANSACTION_1 = TransactionDto.builder().clientId(4L).bank("PKO").transactionType(INCOME).price(350.0).quantity(1).createdAt(CREATED_TIME).build();
     private static final TransactionDto FRAUD_TRANSACTION_2 = TransactionDto.builder().clientId(4L).bank("PKO").transactionType(INCOME).price(350.0).quantity(1).createdAt(CREATED_TIME).build();
@@ -172,7 +172,7 @@ public class ApplicationIT {
     }
 
     @Test
-    public void shouldConsumeFromTransactionDLTWhenTransactionTypeInvalid() {
+    public void shouldConsumeFromTransactionDLTWhenClientIdOutOfRange() {
         final ResponseEntity<Void> response = testRestTemplate.postForEntity(buildUri("/transaction"), INVALID_TRANSACTION, Void.class);
         assertEquals(OK.value(), response.getStatusCodeValue());
 
