@@ -4,7 +4,6 @@ import static java.math.BigDecimal.valueOf;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Optional;
 import org.springframework.stereotype.Component;
 import com.mikhail.belski.rest.kafka.postgres.debezium.domain.TransactionDto;
 import com.mikhail.belski.rest.kafka.postgres.debezium.entity.ClientEntity;
@@ -35,9 +34,7 @@ public class TransactionTransformerImpl implements TransactionTransformer {
     }
 
     private ClientEntity getOrCreateClient(final Long clientId) {
-        final Optional<ClientEntity> clientOptional = clientRepository.findById(clientId);
-
-         return clientOptional.orElseGet(() -> clientRepository.save(getDummyClient(clientId)));
+         return clientRepository.findById(clientId).orElseGet(() -> clientRepository.save(getDummyClient(clientId)));
     }
 
     private ClientEntity getDummyClient (final Long clientId) {

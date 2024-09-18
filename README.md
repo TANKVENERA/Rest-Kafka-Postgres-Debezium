@@ -18,6 +18,11 @@ Kafka Debezium Integration
 
 `docker-compose up --detach zookeeper kafka db debezium-connect kafka-connect && docker-compose build && docker-compose up connectors-setup --force-recreate app`
 
+### OR:
+    
+ 1. `docker-compose up --detach zookeeper kafka db debezium-connect kafka-connect && docker-compose build && docker-compose up connectors-setup` - start infrastructure via docker
+ 2. `mvn spring-boot:run` - start main app locally
+
  **Go to Swagger**:
  [http://localhost:8080/rest--kafka--postgres--debezium/swagger-ui/index.html]()
 

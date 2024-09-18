@@ -27,6 +27,6 @@ public class ClientEntity {
 
     private String lastName;
 
-    @OneToMany
+    @OneToMany(mappedBy = "client")
     private List<TransactionEntity> transactions;
 }

@@ -3,6 +3,7 @@ package com.mikhail.belski.rest.kafka.postgres.debezium.service;
 import static java.time.LocalDateTime.now;
 
 import java.time.Clock;
+import java.time.temporal.ChronoUnit;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -21,11 +22,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     private KafkaTemplate<Long, Object> kafkaTemplate;
     private NewTopic transactionTopic;
-    private Clock clock;
+    private Clock defaultClock;
 
     @Override
     public void publishTransaction(final TransactionDto transaction) {
-        transaction.setCreatedAt(now(clock));
+        transaction.setCreatedAt(now(defaultClock).truncatedTo(ChronoUnit.SECONDS));
 
         final Long clientId = transaction.getClientId();
         final ListenableFuture<SendResult<Long, Object>> sendResultFuture =

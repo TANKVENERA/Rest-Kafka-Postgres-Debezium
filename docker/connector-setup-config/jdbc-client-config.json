@@ -6,9 +6,9 @@
     "connection.user": "mikki-rurk",
     "connection.password": "54321",
     "topic.prefix": "transaction-average-sum-topic",
-    "poll.interval.ms": 60000,
+    "poll.interval.ms": 86400000,
     "mode": "bulk",
-    "query": "SELECT client_id, avg(transaction_amount) as average_sum from transactions WHERE created_at >= NOW() - INTERVAL '1 MINUTE' GROUP BY client_id",
+    "query": "SELECT client_id, avg(transaction_amount) as average_sum from transactions WHERE created_at >= NOW() - INTERVAL '1 DAY' GROUP BY client_id",
     "transforms": "createKey",
     "transforms.createKey.type": "org.apache.kafka.connect.transforms.ValueToKey",
     "transforms.createKey.fields": "client_id"

@@ -1,9 +1,8 @@
 package com.mikhail.belski.rest.kafka.postgres.debezium.config.consumer;
 
 import java.util.HashMap;
-import java.util.Map;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.LongDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,19 +19,19 @@ public class ClientConsumerConfig {
     private String bootstrapAddress;
 
     @Bean
-    public ConsumerFactory<String, ClientDto> clientConsumerFactory() {
+    public ConsumerFactory<Long, ClientDto> clientConsumerFactory() {
         final HashMap<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapAddress);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, "client-group-id");
 
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(),
+        return new DefaultKafkaConsumerFactory<>(props, new LongDeserializer(),
                 new JsonDeserializer<>(ClientDto.class));
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, ClientDto> clientConsumerContainerFactory(
-            final ConsumerFactory<String, ClientDto> clientConsumerFactory) {
-        ConcurrentKafkaListenerContainerFactory<String, ClientDto> factory =
+    public ConcurrentKafkaListenerContainerFactory<Long, ClientDto> clientConsumerContainerFactory(
+            final ConsumerFactory<Long, ClientDto> clientConsumerFactory) {
+        ConcurrentKafkaListenerContainerFactory<Long, ClientDto> factory =
                 new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(clientConsumerFactory);
 
