@@ -29,7 +29,7 @@ public class ClientListener {
     @RetryableTopic(attempts = "1", kafkaTemplate = "producerTemplate", dltStrategy = FAIL_ON_ERROR, dltTopicSuffix = "${dead.letter.queue.suffix}")
     @KafkaListener(topics = "${client.topic}", groupId = "client-group-id", containerFactory = "clientConsumerContainerFactory")
     public void listenClient(@Payload final ClientDto client) {
-        clientRepository.save(clientTransformer.transform(client));
+        clientRepository.save(clientTransformer.transformToClientEntity(client));
 
         log.info(CONSUME_CLIENT_LOG_INFO_TEMPLATE, client.getClientId(), client.getEmail());
     }
