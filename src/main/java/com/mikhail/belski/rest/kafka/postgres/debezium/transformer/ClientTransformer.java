@@ -5,5 +5,7 @@ import com.mikhail.belski.rest.kafka.postgres.debezium.entity.ClientEntity;
 
 public interface ClientTransformer {
 
-    ClientEntity transform(ClientDto clientDto);
+    ClientEntity transformToClientEntity(ClientDto clientDto);
+
+    ClientDto transformToClientDto(final ClientDto client, final ClientDto aggr);
 }
